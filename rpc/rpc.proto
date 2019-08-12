@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package rpc;
+
+service Wallet {
+    rpc Balance(BalanceRequest) returns (BalanceResponse);
+    rpc Send(SendRequest) returns (SendResponse);
+}
+
+message SendRequest {
+    string Address = 1;
+    int64 Amount = 2;
+}
+
+message SendResponse {}
+
+message BalanceRequest {}
+
+message BalanceResponse {
+    int64 LightningBalance = 1;
+    int64 OnchainBalance = 2;
+}
