@@ -31,7 +31,7 @@ func New(c *xmppc.Client) *Money {
 }
 
 func (money *Money) RequestInvoice(to string, amount int, output rx.Stream) {
-	iq := xmppc.MakeIQ("get", to)
+	iq := xmppc.MakeIQ(to, "get", "")
 
 	iq.AddChild(&xmppInvoice{Amount: amount})
 
@@ -48,7 +48,7 @@ func (money *Money) RequestInvoice(to string, amount int, output rx.Stream) {
 }
 
 func (money *Money) SendInvoice(to string, id string, invoice *bitcoin.Invoice) {
-	r := xmppc.MakeIQ("result", to)
+	r := xmppc.MakeIQ(to, "result", "")
 	r.ID = id
 	r.AddChild(&xmppInvoice{
 		Data: invoice.PaymentRequest,
