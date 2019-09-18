@@ -1,6 +1,7 @@
 package jabber
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -46,8 +47,18 @@ func NewJabber(cfg *Config) (*Jabber, error) {
 		log.Printf("[%s] %s\n", msg.From.Bare(), msg.Body)
 	}, nil, nil)
 
-	j.SessionStream.Subscribe(func(jid string) {
-		log.Println("Bound to", jid)
+	j.Presence.UpdateStream.Subscribe(func(u *presence.Update) {
+		a := "offline"
+		if u.Online {
+			a = "online"
+		}
+		fmt.Printf("%s has gone %s (%s)\n", u.JID, a, u.Status)
+	}, nil, nil)
+
+	j.Presence.RequestStream.Subscribe(func(req *presence.Request) {
+		log.Println("Auto-accepting subscription request from", req.JID)
+		req.Allow()
+		j.Presence.Subscribe(req.JID)
 	}, nil, nil)
 
 	j.Roster.RosterStream.Subscribe(func(items []*roster.RosterItem) {
@@ -56,9 +67,9 @@ func NewJabber(cfg *Config) (*Jabber, error) {
 		}
 	}, nil, nil)
 
-	j.Roster.UpdateStream.Subscribe(func(update *roster.Update) {
-		log.Println(update.JID, "changed status", update.Priority, update.Status, update.Show)
-	}, nil, nil)
+	// j.Roster.UpdateStream.Subscribe(func(update *roster.Update) {
+	// 	log.Println(update.JID, "changed status", update.Priority, update.Status, update.Show)
+	// }, nil, nil)
 
 	return j, nil
 }

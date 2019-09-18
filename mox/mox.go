@@ -13,6 +13,8 @@ import (
 type Mox struct {
 	*dep.Context
 	jabber *jabber.Jabber
+
+	quit chan bool
 }
 
 func New(cfg *Config) *Mox {
@@ -22,6 +24,7 @@ func New(cfg *Config) *Mox {
 
 	mox := &Mox{
 		Context: dep.NewContext(),
+		quit:    make(chan bool),
 	}
 
 	mox.Add(cfg.Jabber)
@@ -44,7 +47,11 @@ func New(cfg *Config) *Mox {
 
 func (mox *Mox) Run() {
 	mox.Call(func(rpc *rpcserver.RPCServer, j *jabber.Jabber) {
-		go rpc.Run()
-		j.Connect()
+		//go rpc.Run()
+		if err := j.Connect(); err != nil {
+			panic(err)
+		}
 	})
+
+	<-mox.quit
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/cryptopunkscc/go-bitcoin"
 	"github.com/cryptopunkscc/go-rx"
-	"github.com/cryptopunkscc/go-xmpp"
 	"github.com/cryptopunkscc/go-xmppc/components/disco"
 	"github.com/cryptopunkscc/mox/jabber"
 	"github.com/cryptopunkscc/mox/services"
@@ -37,11 +36,11 @@ func (prompt *Prompt) CommandLine() {
 		case "add":
 			var jid string
 			fmt.Scanf("%s", &jid)
-			prompt.xmpp.Roster.Subscribe(xmpp.JID(jid))
+			prompt.xmpp.Presence.Subscribe(jid)
 		case "remove":
 			var jid string
 			fmt.Scanf("%s", &jid)
-			prompt.xmpp.Roster.Unsubscribe(xmpp.JID(jid))
+			prompt.xmpp.Presence.Unsubscribe(jid)
 		case "msg":
 			var jid, msg string
 			fmt.Scanf("%s %s", &jid, &msg)
@@ -60,7 +59,7 @@ func (prompt *Prompt) CommandLine() {
 		case "query":
 			var jid string
 			fmt.Scanf("%s", &jid)
-			prompt.xmpp.Disco.Query(jid, rx.SyncPipe(printDiscoInfo))
+			prompt.xmpp.Disco.Query(jid, rx.Pipe(printDiscoInfo))
 		}
 	}
 }

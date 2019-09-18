@@ -53,6 +53,7 @@ func New(cfg *Config, j *jabber.Jabber, ln bitcoin.LightningClient, bc *services
 	bot.commands["issue"] = bot.cmdIssue
 	bot.commands["pay"] = bot.cmdPay
 	bot.commands["allow"] = bot.cmdAllow
+	bot.commands["roster"] = bot.cmdRoster
 
 	ln.SetInvoiceHandler(bot.handleInvoice)
 	return bot

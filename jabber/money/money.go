@@ -31,17 +31,11 @@ func New(c *xmppc.Client) *Money {
 }
 
 func (money *Money) RequestInvoice(to string, amount int, output rx.Stream) {
-	iq := &xmpp.Stanza{
-		Stanza: "iq",
-		Type:   "get",
-		To:     to,
-	}
+	iq := xmppc.MakeIQ("get", to)
 
-	iq.Add(&xmppInvoice{
-		Amount: amount,
-	})
+	iq.AddChild(&xmppInvoice{Amount: amount})
 
-	money.client.Write(iq, func(res *xmpp.Stanza) {
+	money.client.Write(iq, rx.Pipe(func(res *xmpp.IQ) {
 		if i, ok := res.Child("invoice").(*xmppInvoice); ok {
 			fmt.Println("[XMPP-MONEY]", i.Data)
 			money.InvoiceStream.Next(i)
@@ -50,25 +44,19 @@ func (money *Money) RequestInvoice(to string, amount int, output rx.Stream) {
 			}
 		}
 
-	})
+	}))
 }
 
 func (money *Money) SendInvoice(to string, id string, invoice *bitcoin.Invoice) {
-	r := &xmpp.Stanza{
-		Stanza: "iq",
-		Type:   "result",
-		To:     to,
-		ID:     id,
-	}
-
-	r.Add(&xmppInvoice{
+	r := xmppc.MakeIQ("result", to)
+	r.ID = id
+	r.AddChild(&xmppInvoice{
 		Data: invoice.PaymentRequest,
 	})
-
 	money.client.Write(r, nil)
 }
 
-func (money *Money) handleInvoiceRequest(s *xmpp.Stanza, i *xmppInvoice) {
+func (money *Money) handleInvoiceRequest(s *xmpp.IQ, i *xmppInvoice) {
 	req := &InvoiceRequest{
 		ID:     s.ID,
 		From:   s.From,
@@ -78,7 +66,7 @@ func (money *Money) handleInvoiceRequest(s *xmpp.Stanza, i *xmppInvoice) {
 	money.InvoiceRequestStream.Next(req)
 }
 
-func (money *Money) handleIQ(s *xmpp.Stanza) {
+func (money *Money) handleIQ(s *xmpp.IQ) {
 	if s.Type != "get" {
 		return
 	}
