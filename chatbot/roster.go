@@ -19,7 +19,7 @@ func (bot *ChatBot) cmdRoster(args []string) string {
 		res = "Your roster:\n"
 		ch := make(chan []*roster.RosterItem, 0)
 
-		bot.jabber.Roster.FetchRoster(rx.Pipe(func(list []*roster.RosterItem) {
+		bot.xmpp.Roster.FetchRoster(rx.Pipe(func(list []*roster.RosterItem) {
 			ch <- list
 		}))
 
@@ -32,13 +32,13 @@ func (bot *ChatBot) cmdRoster(args []string) string {
 		if len(args) < 3 {
 			return "roster add <jid> <name>"
 		}
-		bot.jabber.Roster.Add(args[1], args[2])
+		bot.xmpp.Roster.Add(args[1], args[2])
 		return "Added."
 	case "remove":
 		if len(args) < 2 {
 			return "roster remove <jid>"
 		}
-		bot.jabber.Roster.Remove(args[1])
+		bot.xmpp.Roster.Remove(args[1])
 		return "Removed."
 	default:
 		return fmt.Sprintf("Unknown command: %s", sub)

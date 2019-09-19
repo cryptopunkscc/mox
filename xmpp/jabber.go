@@ -1,11 +1,11 @@
-package jabber
+package xmpp
 
 import (
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/cryptopunkscc/mox/jabber/money"
+	"github.com/cryptopunkscc/mox/xmpp/money"
 
 	"github.com/cryptopunkscc/go-dep"
 	"github.com/cryptopunkscc/go-xmppc"
@@ -17,7 +17,7 @@ import (
 	"github.com/cryptopunkscc/go-xmppc/components/roster"
 )
 
-type Jabber struct {
+type XMPP struct {
 	*xmppc.Client
 	*dep.Context
 	Ping     *ping.Ping
@@ -29,9 +29,9 @@ type Jabber struct {
 	Caps     *caps.Caps
 }
 
-func NewJabber(cfg *Config) (*Jabber, error) {
+func NewXMPP(cfg *Config) (*XMPP, error) {
 	c := dep.NewContext()
-	j := &Jabber{Context: c}
+	j := &XMPP{Context: c}
 
 	c.Add(xmppc.NewClient(cfg.JID, cfg.Password))
 	c.Make(ping.New)

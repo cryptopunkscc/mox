@@ -9,12 +9,12 @@ import (
 	"github.com/cryptopunkscc/mox/rpcserver"
 
 	"github.com/cryptopunkscc/go-bitcoin/lnd"
-	"github.com/cryptopunkscc/mox/jabber"
+	"github.com/cryptopunkscc/mox/xmpp"
 )
 
 type Config struct {
 	RPC     *rpcserver.Config `json:"rpc"`
-	Jabber  *jabber.Config    `json:"jabber"`
+	XMPP    *xmpp.Config      `json:"xmpp"`
 	Chatbot *chatbot.Config   `json:"chatbot"`
 	LND     *lnd.Config       `json:"lnd"`
 }
@@ -33,7 +33,7 @@ func LoadConfig(configFile string) *Config {
 }
 
 func (cfg *Config) Validate() error {
-	if err := cfg.Jabber.Validate(); err != nil {
+	if err := cfg.XMPP.Validate(); err != nil {
 		return err
 	}
 	if cfg.RPC != nil {

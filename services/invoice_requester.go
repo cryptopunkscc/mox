@@ -2,19 +2,19 @@ package services
 
 import (
 	"github.com/cryptopunkscc/go-rx"
-	"github.com/cryptopunkscc/mox/jabber"
+	"github.com/cryptopunkscc/mox/xmpp"
 )
 
 type InvoiceRequster struct {
-	jabber *jabber.Jabber
+	xmpp *xmpp.XMPP
 }
 
-func NewInvoiceRequester(j *jabber.Jabber) *InvoiceRequster {
+func NewInvoiceRequester(j *xmpp.XMPP) *InvoiceRequster {
 	return &InvoiceRequster{
-		jabber: j,
+		xmpp: j,
 	}
 }
 
 func (r *InvoiceRequster) Request(jid string, amount int, output rx.Stream) {
-	r.jabber.Money.RequestInvoice(jid, amount, output)
+	r.xmpp.Money.RequestInvoice(jid, amount, output)
 }

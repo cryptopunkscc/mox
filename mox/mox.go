@@ -4,15 +4,15 @@ import (
 	"github.com/cryptopunkscc/go-bitcoin/lnd"
 	"github.com/cryptopunkscc/go-dep"
 	"github.com/cryptopunkscc/mox/chatbot"
-	"github.com/cryptopunkscc/mox/jabber"
 	"github.com/cryptopunkscc/mox/prompt"
 	"github.com/cryptopunkscc/mox/rpcserver"
 	"github.com/cryptopunkscc/mox/services"
+	"github.com/cryptopunkscc/mox/xmpp"
 )
 
 type Mox struct {
 	*dep.Context
-	jabber *jabber.Jabber
+	xmpp *xmpp.XMPP
 
 	quit chan bool
 }
@@ -27,11 +27,11 @@ func New(cfg *Config) *Mox {
 		quit:    make(chan bool),
 	}
 
-	mox.Add(cfg.Jabber)
+	mox.Add(cfg.XMPP)
 	mox.Add(cfg.LND)
 	mox.Add(cfg.RPC)
 
-	mox.Make(jabber.NewJabber)
+	mox.Make(xmpp.NewXMPP)
 	mox.Make(lnd.Connect)
 	mox.Make(services.NewInvoiceSender)
 	mox.Make(services.NewInvoiceRequester)
@@ -46,7 +46,7 @@ func New(cfg *Config) *Mox {
 }
 
 func (mox *Mox) Run() {
-	mox.Call(func(rpc *rpcserver.RPCServer, j *jabber.Jabber) {
+	mox.Call(func(rpc *rpcserver.RPCServer, j *xmpp.XMPP) {
 		//go rpc.Run()
 		if err := j.Connect(); err != nil {
 			panic(err)

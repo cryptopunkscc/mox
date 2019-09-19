@@ -11,7 +11,7 @@ import (
 	"github.com/cryptopunkscc/mox/services"
 
 	"github.com/cryptopunkscc/go-xmppc/components/chat"
-	"github.com/cryptopunkscc/mox/jabber"
+	"github.com/cryptopunkscc/mox/xmpp"
 )
 
 type command func([]string) string
@@ -19,7 +19,7 @@ type command func([]string) string
 type ChatBot struct {
 	config         *Config
 	acl            *acl.ACL
-	jabber         *jabber.Jabber
+	xmpp           *xmpp.XMPP
 	ln             bitcoin.LightningClient
 	commands       map[string]command
 	balanceChecker *services.BalanceChecker
@@ -27,11 +27,11 @@ type ChatBot struct {
 	invoiceDecoder *services.InvoiceDecoder
 }
 
-func New(cfg *Config, j *jabber.Jabber, ln bitcoin.LightningClient, bc *services.BalanceChecker, ms *services.MoneySender, id *services.InvoiceDecoder) *ChatBot {
+func New(cfg *Config, j *xmpp.XMPP, ln bitcoin.LightningClient, bc *services.BalanceChecker, ms *services.MoneySender, id *services.InvoiceDecoder) *ChatBot {
 	bot := &ChatBot{
 		config:         cfg,
 		acl:            acl.New(),
-		jabber:         j,
+		xmpp:           j,
 		ln:             ln,
 		balanceChecker: bc,
 		moneySender:    ms,
@@ -44,7 +44,7 @@ func New(cfg *Config, j *jabber.Jabber, ln bitcoin.LightningClient, bc *services
 	}
 
 	bot.acl.Set(bot.config.AdminJID, acl.Permissions{Access: true})
-	bot.jabber.Chat.MessageStream.Subscribe(bot.onMessage, nil, nil)
+	bot.xmpp.Chat.MessageStream.Subscribe(bot.onMessage, nil, nil)
 	bot.commands["balance"] = bot.cmdBalance
 	bot.commands["send"] = bot.cmdSend
 	bot.commands["decode"] = bot.cmdDecode
@@ -62,7 +62,7 @@ func New(cfg *Config, j *jabber.Jabber, ln bitcoin.LightningClient, bc *services
 func (bot *ChatBot) handleInvoice(i *bitcoin.Invoice) {
 	if i.State == 1 {
 		msg := fmt.Sprintf("Received %d SAT!", i.Amount.Sat())
-		bot.jabber.Chat.SendMessage(bot.config.AdminJID, msg)
+		bot.xmpp.Chat.SendMessage(bot.config.AdminJID, msg)
 	}
 }
 
@@ -79,16 +79,16 @@ func (bot *ChatBot) onMessage(msg *chat.Message) {
 	p := bot.acl.Get(msg.From.Bare().String())
 
 	if !p.Access {
-		bot.jabber.Chat.SendMessage(msg.From.String(), "Permission denied")
+		bot.xmpp.Chat.SendMessage(msg.From.String(), "Permission denied")
 		return
 	}
 
 	if fn, ok := bot.commands[cmd]; ok {
 		res := fn(args)
 		if res != "" {
-			bot.jabber.Chat.SendMessage(msg.From.String(), res)
+			bot.xmpp.Chat.SendMessage(msg.From.String(), res)
 		}
 	} else {
-		bot.jabber.Chat.SendMessage(msg.From.String(), "Unknown command")
+		bot.xmpp.Chat.SendMessage(msg.From.String(), "Unknown command")
 	}
 }

@@ -6,17 +6,17 @@ import (
 	"github.com/cryptopunkscc/go-bitcoin"
 	"github.com/cryptopunkscc/go-rx"
 	"github.com/cryptopunkscc/go-xmppc/components/disco"
-	"github.com/cryptopunkscc/mox/jabber"
 	"github.com/cryptopunkscc/mox/services"
+	"github.com/cryptopunkscc/mox/xmpp"
 )
 
 type Prompt struct {
-	xmpp        *jabber.Jabber
+	xmpp        *xmpp.XMPP
 	ln          bitcoin.LightningClient
 	moneySender *services.MoneySender
 }
 
-func New(j *jabber.Jabber, ln bitcoin.LightningClient, ms *services.MoneySender) *Prompt {
+func New(j *xmpp.XMPP, ln bitcoin.LightningClient, ms *services.MoneySender) *Prompt {
 	p := &Prompt{
 		xmpp:        j,
 		ln:          ln,
