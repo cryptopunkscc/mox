@@ -1,6 +1,8 @@
 package services
 
 import (
+	"log"
+
 	"github.com/cryptopunkscc/go-bitcoin"
 	"github.com/cryptopunkscc/go-rx"
 	"github.com/cryptopunkscc/go-xmpp"
@@ -22,7 +24,11 @@ func NewMoneySender(r *InvoiceRequster, ln bitcoin.LightningClient) *MoneySender
 }
 
 func (p *MoneySender) onPaymentRequest(req string) {
-	p.ln.PayInvoice(req)
+	log.Println("Received payment request:", req)
+	err := p.ln.PayInvoice(req)
+	if err != nil {
+		log.Println("Error paying invoice:", err)
+	}
 }
 
 func (p *MoneySender) Send(to string, amount int) error {

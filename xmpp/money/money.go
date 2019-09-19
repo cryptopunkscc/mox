@@ -1,8 +1,6 @@
 package money
 
 import (
-	"fmt"
-
 	"github.com/cryptopunkscc/go-bitcoin"
 	"github.com/cryptopunkscc/go-rx"
 	"github.com/cryptopunkscc/go-xmpp"
@@ -37,7 +35,6 @@ func (money *Money) RequestInvoice(to string, amount int, output rx.Stream) {
 
 	money.client.Write(iq, rx.Pipe(func(res *xmpp.IQ) {
 		if i, ok := res.Child("invoice").(*xmppInvoice); ok {
-			fmt.Println("[XMPP-MONEY]", i.Data)
 			money.InvoiceStream.Next(i)
 			if output != nil {
 				output.Next(i.Data)
