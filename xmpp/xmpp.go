@@ -7,8 +7,8 @@ import (
 
 	"github.com/cryptopunkscc/mox/xmpp/money"
 
-	"github.com/cryptopunkscc/go-dep"
-	"github.com/cryptopunkscc/go-xmppc"
+	dep "github.com/cryptopunkscc/go-dep"
+	xmppc "github.com/cryptopunkscc/go-xmppc"
 	"github.com/cryptopunkscc/go-xmppc/components/caps"
 	"github.com/cryptopunkscc/go-xmppc/components/chat"
 	"github.com/cryptopunkscc/go-xmppc/components/disco"
