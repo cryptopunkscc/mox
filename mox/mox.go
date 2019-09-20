@@ -2,7 +2,7 @@ package mox
 
 import (
 	"github.com/cryptopunkscc/go-bitcoin/lnd"
-	"github.com/cryptopunkscc/go-dep"
+	dep "github.com/cryptopunkscc/go-dep"
 	"github.com/cryptopunkscc/mox/chatbot"
 	"github.com/cryptopunkscc/mox/prompt"
 	"github.com/cryptopunkscc/mox/rpcserver"
@@ -47,7 +47,7 @@ func New(cfg *Config) *Mox {
 
 func (mox *Mox) Run() {
 	mox.Call(func(rpc *rpcserver.RPCServer, j *xmpp.XMPP) {
-		//go rpc.Run()
+		go rpc.Run()
 		if err := j.Connect(); err != nil {
 			panic(err)
 		}

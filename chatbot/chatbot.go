@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cryptopunkscc/go-bitcoin"
+	bitcoin "github.com/cryptopunkscc/go-bitcoin"
 
 	"github.com/cryptopunkscc/mox/chatbot/acl"
 	"github.com/cryptopunkscc/mox/services"
@@ -54,6 +54,7 @@ func New(cfg *Config, j *xmpp.XMPP, ln bitcoin.LightningClient, bc *services.Bal
 	bot.commands["pay"] = bot.cmdPay
 	bot.commands["allow"] = bot.cmdAllow
 	bot.commands["roster"] = bot.cmdRoster
+	bot.commands["subscribe"] = bot.cmdSubscribe
 
 	ln.SetInvoiceHandler(bot.handleInvoice)
 	return bot
