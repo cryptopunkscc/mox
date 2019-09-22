@@ -1,10 +1,10 @@
 package money
 
 import (
-	"github.com/cryptopunkscc/go-bitcoin"
-	"github.com/cryptopunkscc/go-rx"
-	"github.com/cryptopunkscc/go-xmpp"
-	"github.com/cryptopunkscc/go-xmppc"
+	bitcoin "github.com/cryptopunkscc/go-bitcoin"
+	rx "github.com/cryptopunkscc/go-rx"
+	xmpp "github.com/cryptopunkscc/go-xmpp"
+	xmppc "github.com/cryptopunkscc/go-xmppc"
 )
 
 type InvoiceRequest struct {

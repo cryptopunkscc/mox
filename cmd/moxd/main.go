@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 
-	"github.com/cryptopunkscc/mox/mox"
+	"github.com/cryptopunkscc/mox"
 )
 
 var configFile string
