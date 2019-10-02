@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io/ioutil"
 
-	"github.com/cryptopunkscc/mox/chatbot"
 	"github.com/cryptopunkscc/mox/rpcserver"
 
 	"github.com/cryptopunkscc/go-bitcoin/lnd"
@@ -13,10 +12,9 @@ import (
 )
 
 type Config struct {
-	RPC     *rpcserver.Config `json:"rpc"`
-	XMPP    *xmpp.Config      `json:"xmpp"`
-	Chatbot *chatbot.Config   `json:"chatbot"`
-	LND     *lnd.Config       `json:"lnd"`
+	RPC  *rpcserver.Config `json:"rpc"`
+	XMPP *xmpp.Config      `json:"xmpp"`
+	LND  *lnd.Config       `json:"lnd"`
 }
 
 func LoadConfig(configFile string) *Config {

@@ -1,79 +1,73 @@
 package xmpp
 
 import (
-	"fmt"
-	"log"
-	"time"
-
-	"github.com/cryptopunkscc/mox/xmpp/money"
-
-	dep "github.com/cryptopunkscc/go-dep"
-	xmppc "github.com/cryptopunkscc/go-xmppc"
-	"github.com/cryptopunkscc/go-xmppc/components/caps"
-	"github.com/cryptopunkscc/go-xmppc/components/chat"
-	"github.com/cryptopunkscc/go-xmppc/components/disco"
+	"github.com/cryptopunkscc/go-xmpp"
+	"github.com/cryptopunkscc/go-xmppc"
 	"github.com/cryptopunkscc/go-xmppc/components/ping"
 	"github.com/cryptopunkscc/go-xmppc/components/presence"
 	"github.com/cryptopunkscc/go-xmppc/components/roster"
+	"github.com/cryptopunkscc/mox/xmpp/money"
+	"log"
+	"time"
 )
 
+const reconnectInterval = 5 * time.Second
+
 type XMPP struct {
-	*xmppc.Client
-	*dep.Context
-	Ping     *ping.Ping
-	Chat     *chat.Chat
-	Roster   *roster.Roster
+	xmppc.Broadcast
+	cfg      *Config
+	session  xmppc.Session
+	Presence presence.Presence
+	Roster   roster.Roster
 	Money    *money.Money
-	Presence *presence.Presence
-	Disco    *disco.Disco
-	Caps     *caps.Caps
 }
 
-func NewXMPP(cfg *Config) (*XMPP, error) {
-	c := dep.NewContext()
-	j := &XMPP{Context: c}
+func (xmpp *XMPP) Online(s xmppc.Session) {
+	xmpp.session = s
 
-	c.Add(xmppc.NewClient(cfg.JID, cfg.Password))
-	c.Make(ping.New)
-	c.Make(chat.New)
-	c.Make(roster.New)
-	c.Make(money.New)
-	c.Make(presence.New)
-	c.Make(disco.New)
-	c.Make(caps.New)
-	c.Inject(j)
-
-	j.Chat.MessageStream.Subscribe(func(msg *chat.Message) {
-		log.Printf("[%s] %s\n", msg.From.Bare(), msg.Body)
-	}, nil, nil)
-
-	j.Presence.UpdateStream.Subscribe(func(u *presence.Update) {
-		a := "offline"
-		if u.Online {
-			a = "online"
-		}
-		fmt.Printf("%s has gone %s (%s)\n", u.JID, a, u.Status)
-	}, nil, nil)
-
-	j.Presence.RequestStream.Subscribe(func(req *presence.Request) {
-		log.Println("Auto-accepting subscription request from", req.JID)
-		req.Allow()
-		j.Presence.Subscribe(req.JID)
-	}, nil, nil)
-
-	j.Roster.RosterStream.Subscribe(func(items []*roster.RosterItem) {
-		for _, i := range items {
-			log.Println(i.JID, i.Name, i.Subscription)
-		}
-	}, nil, nil)
-
-	// j.Roster.UpdateStream.Subscribe(func(update *roster.Update) {
-	// 	log.Println(update.JID, "changed status", update.Priority, update.Status, update.Show)
-	// }, nil, nil)
-
-	return j, nil
+	log.Println("Connected as", s.JID())
 }
 
-func logLatency(l time.Duration) {
-	log.Println("Ping", l)
+func (xmpp *XMPP) Offline(err error) {
+	if err == nil {
+		log.Println("Disconnected.")
+	} else {
+		log.Printf("Disconnected (error: %s). Reconnecting in %s...\n", err.Error(), reconnectInterval)
+		go xmpp.reconnect()
+	}
+}
+
+func (xmpp *XMPP) HandleStanza(s xmpp.Stanza) {
+}
+
+func NewXMPP(cfg *Config) *XMPP {
+	xmpp := &XMPP{
+		cfg:   cfg,
+		Money: &money.Money{},
+	}
+	xmpp.Add(xmpp)
+	xmpp.Add(&ping.Ping{})
+	xmpp.Add(&xmpp.Presence)
+	xmpp.Add(&xmpp.Roster)
+	xmpp.Add(xmpp.Money)
+
+	return xmpp
+}
+
+func (xmpp *XMPP) Connect() error {
+	xmppConfig := &xmppc.Config{
+		JID:      xmpp.cfg.JID,
+		Password: xmpp.cfg.Password,
+	}
+
+	return xmppc.Open(&xmpp.Broadcast, xmppConfig)
+}
+
+func (xmpp *XMPP) reconnect() {
+	<-time.After(reconnectInterval)
+	log.Println(("Reconnecting..."))
+	if err := xmpp.Connect(); err != nil {
+		log.Printf("Error reconnecting: %s. Retrying in %s.\n", err.Error(), reconnectInterval)
+		go xmpp.reconnect()
+	}
 }

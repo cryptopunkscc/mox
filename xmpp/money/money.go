@@ -1,78 +1,100 @@
 package money
 
 import (
-	bitcoin "github.com/cryptopunkscc/go-bitcoin"
-	rx "github.com/cryptopunkscc/go-rx"
-	xmpp "github.com/cryptopunkscc/go-xmpp"
-	xmppc "github.com/cryptopunkscc/go-xmppc"
+	"github.com/cryptopunkscc/go-bitcoin"
+	"github.com/cryptopunkscc/go-xmpp"
+	"github.com/cryptopunkscc/go-xmppc"
 )
 
-type InvoiceRequest struct {
-	From   string
-	Amount int
-	ID     string
-}
+var _ xmppc.Handler = &Money{}
 
 type InvoiceRequestHandler func(*InvoiceRequest)
-type InvoiceHandler func(string)
+type InvoiceHandler func(*Invoice)
+
+type InvoiceRequest struct {
+	JID    xmpp.JID
+	Amount bitcoin.Amount
+	money  *Money
+}
+
+type Invoice struct {
+	JID     xmpp.JID
+	Invoice string
+}
+
+func (ir *InvoiceRequest) SendInvoice(invoice string) {
+	ir.money.SendInvoice(ir.JID, invoice)
+}
 
 type Money struct {
-	client               *xmppc.Client
-	InvoiceRequestStream rx.SyncStream
-	InvoiceStream        rx.SyncStream
+	session xmppc.Session
+	InvoiceRequestHandler
+	InvoiceHandler
 }
 
-func New(c *xmppc.Client) *Money {
-	money := &Money{client: c}
-	c.IQStream.Subscribe(money.handleIQ, nil, nil)
-	return money
+func (m *Money) RequestInvoice(jid xmpp.JID, amount bitcoin.Amount) {
+	xm := &xmppMoney{
+		Request: &xmppRequest{
+			Amount: int(amount.Sat()),
+		},
+	}
+	xmsg := &xmpp.Message{
+		To:   jid,
+		Type: "normal",
+	}
+	xmsg.AddChild(xm)
+	m.session.Write(xmsg)
 }
 
-func (money *Money) RequestInvoice(to string, amount int, output rx.Stream) {
-	iq := xmppc.MakeIQ(to, "get", "")
-
-	iq.AddChild(&xmppInvoice{Amount: amount})
-
-	money.client.Write(iq, rx.Pipe(func(res *xmpp.IQ) {
-		if i, ok := res.Child("invoice").(*xmppInvoice); ok {
-			money.InvoiceStream.Next(i)
-			if output != nil {
-				output.Next(i.Data)
-			}
-		}
-
-	}))
-}
-
-func (money *Money) SendInvoice(to string, id string, invoice *bitcoin.Invoice) {
-	r := xmppc.MakeIQ(to, "result", "")
-	r.ID = id
-	r.AddChild(&xmppInvoice{
-		Data: invoice.PaymentRequest,
+func (m *Money) SendInvoice(jid xmpp.JID, invoice string) {
+	msg := &xmpp.Message{
+		To:   jid,
+		Type: "normal",
+	}
+	msg.AddChild(&xmppMoney{
+		Invoice: &xmppInvoice{
+			Encoded: invoice,
+		},
 	})
-	money.client.Write(r, nil)
+	m.session.Write(msg)
 }
 
-func (money *Money) handleInvoiceRequest(s *xmpp.IQ, i *xmppInvoice) {
-	req := &InvoiceRequest{
-		ID:     s.ID,
-		From:   s.From,
-		Amount: i.Amount,
-	}
+func (m *Money) handleMoney(msg *xmpp.Message) {
+	money := msg.Child(&xmppMoney{}).(*xmppMoney)
 
-	money.InvoiceRequestStream.Next(req)
+	if money.Request != nil {
+		if m.InvoiceRequestHandler != nil {
+			m.InvoiceRequestHandler(&InvoiceRequest{
+				JID:    msg.From,
+				Amount: bitcoin.Sat(int64(money.Request.Amount)),
+				money:  m,
+			})
+		}
+	}
+	if money.Invoice != nil {
+		if m.InvoiceHandler != nil {
+			m.InvoiceHandler(&Invoice{
+				JID:     msg.From,
+				Invoice: money.Invoice.Encoded,
+			})
+		}
+	}
 }
 
-func (money *Money) handleIQ(s *xmpp.IQ) {
-	if s.Type != "get" {
-		return
-	}
-
-	if i, ok := s.Child("invoice").(*xmppInvoice); ok {
-		money.handleInvoiceRequest(s, i)
+func (m *Money) HandleMessage(msg *xmpp.Message) {
+	if _, ok := msg.Child(&xmppMoney{}).(*xmppMoney); ok {
+		m.handleMoney(msg)
 	}
 }
 
-func init() {
-	xmpp.IQContext.Add(&xmppInvoice{})
+func (m *Money) HandleStanza(s xmpp.Stanza) {
+	xmppc.HandleStanza(m, s)
+}
+
+func (m *Money) Online(s xmppc.Session) {
+	m.session = s
+}
+
+func (m *Money) Offline(error) {
+
 }

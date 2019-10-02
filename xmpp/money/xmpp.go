@@ -1,10 +1,26 @@
 package money
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+	"github.com/cryptopunkscc/go-xmpp"
+)
+
+type xmppMoney struct {
+	XMLName xml.Name `xml:"urn:xmpp:bitcoin:0 money"`
+	Invoice *xmppInvoice
+	Request *xmppRequest
+}
 
 type xmppInvoice struct {
-	XMLName xml.Name `xml:"urn:xmpp:bitcoin invoice"`
+	XMLName xml.Name `xml:"invoice"`
+	Encoded string   `xml:"data,omitempty"`
+}
+
+type xmppRequest struct {
+	XMLName xml.Name `xml:"request"`
 	Amount  int      `xml:"amount,omitempty"`
-	Method  string   `xml:"method,omitempty"`
-	Data    string   `xml:"data,omitempty"`
+}
+
+func init() {
+	xmpp.AddElement(&xmppMoney{})
 }

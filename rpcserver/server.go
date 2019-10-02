@@ -6,24 +6,21 @@ import (
 
 	"github.com/cryptopunkscc/go-bitcoin"
 	"github.com/cryptopunkscc/mox/rpc"
-	"github.com/cryptopunkscc/mox/services"
 	"github.com/cryptopunkscc/mox/xmpp"
 	"google.golang.org/grpc"
 )
 
 type RPCServer struct {
-	config      *Config
-	ln          bitcoin.LightningClient
-	xmpp        *xmpp.XMPP
-	MoneySender *services.MoneySender
+	config *Config
+	ln     bitcoin.LightningClient
+	xmpp   *xmpp.XMPP
 }
 
-func New(config *Config, j *xmpp.XMPP, ln bitcoin.LightningClient, ms *services.MoneySender) *RPCServer {
+func New(config *Config, j *xmpp.XMPP, ln bitcoin.LightningClient) *RPCServer {
 	srv := &RPCServer{
-		config:      config,
-		ln:          ln,
-		xmpp:        j,
-		MoneySender: ms,
+		config: config,
+		ln:     ln,
+		xmpp:   j,
 	}
 	return srv
 }

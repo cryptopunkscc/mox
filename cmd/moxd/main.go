@@ -15,6 +15,9 @@ func init() {
 func main() {
 	flag.Parse()
 	cfg := mox.LoadConfig(configFile)
-	app := mox.New(cfg)
+	app, err := mox.New(cfg)
+	if err != nil {
+		panic(err)
+	}
 	app.Run()
 }

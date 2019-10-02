@@ -1,9 +1,12 @@
 package xmpp
 
-import "errors"
+import (
+	"errors"
+	"github.com/cryptopunkscc/go-xmpp"
+)
 
 type Config struct {
-	JID      string
+	JID      xmpp.JID
 	Password string
 }
 
