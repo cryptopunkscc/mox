@@ -1,4 +1,4 @@
-package rosterview
+package roster
 
 import "github.com/cryptopunkscc/go-xmpp"
 

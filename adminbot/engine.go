@@ -7,20 +7,19 @@ import (
 	chatbot "github.com/cryptopunkscc/go-xmppc/bot"
 	"github.com/cryptopunkscc/go-xmppc/components/presence"
 	"github.com/cryptopunkscc/go-xmppc/components/roster"
-	"github.com/cryptopunkscc/mox/services"
-	"github.com/cryptopunkscc/mox/xmpp/money"
+	"github.com/cryptopunkscc/mox/payments"
 	"time"
 )
 
 type Engine struct {
-	Lightning  *services.LightningService
 	Presence   *presence.Presence
 	RosterComp *roster.Roster
-	Money      *money.Money
+	Money      *payments.Component
+	Payments   *payments.Service
 }
 
 func (e *Engine) Balance(ctx *chatbot.Context) {
-	balance := e.Lightning.Balance()
+	balance := e.Payments.Balance()
 	ctx.Reply("Your balance is %d SAT", balance.Sat())
 }
 
@@ -37,12 +36,12 @@ func (e *Engine) Issue(ctx *chatbot.Context, sats int, memo string) {
 		ctx.Reply("Amount must be greater than 0.")
 		return
 	}
-	invoice := e.Lightning.IssueInvoice(bitcoin.Sat(int64(sats)), memo, 24*time.Hour)
+	invoice := e.Payments.IssueInvoice(bitcoin.Sat(int64(sats)), memo, 24*time.Hour)
 	ctx.Reply("Here's your invoice:\n%s", invoice.PaymentRequest)
 }
 
 func (e *Engine) Pay(ctx *chatbot.Context, invoice string) {
-	err := e.Lightning.PayInvoice(invoice)
+	err := e.Payments.PayInvoice(invoice)
 	if err == nil {
 		ctx.Reply("Invoice paid!")
 		return
@@ -51,7 +50,14 @@ func (e *Engine) Pay(ctx *chatbot.Context, invoice string) {
 }
 
 func (e *Engine) Send(ctx *chatbot.Context, jid string, amount int) {
-	e.Money.RequestInvoice(xmpp.JID(jid), bitcoin.Sat(int64(amount)))
+	err := e.Payments.SendBitcoin(xmpp.JID(jid), bitcoin.Sat(int64(amount)))
+
+	if err != nil {
+		ctx.Reply("Error sending money: %s", err.Error())
+		return
+	}
+
+	ctx.Reply("Payment sent!")
 }
 
 func (e *Engine) Roster(ctx *chatbot.Context) {

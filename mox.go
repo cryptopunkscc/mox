@@ -6,18 +6,17 @@ import (
 	"github.com/cryptopunkscc/go-xmppc/bot"
 	"github.com/cryptopunkscc/go-xmppc/components/presence"
 	"github.com/cryptopunkscc/mox/adminbot"
-	"github.com/cryptopunkscc/mox/services"
+	"github.com/cryptopunkscc/mox/payments"
 	"github.com/cryptopunkscc/mox/xmpp"
-	"github.com/cryptopunkscc/mox/xmpp/money"
 	"log"
 	"time"
 )
 
 type Mox struct {
-	xmpp      *xmpp.XMPP
-	ln        bitcoin.LightningClient
-	bot       *bot.Bot
-	lightning *services.LightningService
+	xmpp     *xmpp.XMPP
+	ln       bitcoin.LightningClient
+	bot      *bot.Bot
+	payments *payments.Service
 
 	quit chan bool
 }
@@ -29,26 +28,22 @@ func New(cfg *Config) (*Mox, error) {
 		xmpp: xmpp.NewXMPP(cfg.XMPP),
 		ln:   lnc,
 	}
-	mox.lightning = &services.LightningService{lnc}
+	mox.payments = &payments.Service{
+		Component:       mox.xmpp.Payments,
+		LightningClient: lnc,
+	}
 	mox.bot = bot.New(&adminbot.Engine{
-		Lightning:  mox.lightning,
+		Payments:   mox.payments,
 		Presence:   &mox.xmpp.Presence,
-		Money:      mox.xmpp.Money,
+		Money:      mox.xmpp.Payments,
 		RosterComp: &mox.xmpp.Roster,
 	})
 
-	mox.xmpp.Money.InvoiceRequestHandler = func(req *money.InvoiceRequest) {
-		log.Printf("%s asks for a %d SAT invoice!", req.JID, req.Amount.Sat())
-		invoice := mox.lightning.IssueInvoice(req.Amount, "", time.Hour)
-		req.SendInvoice(invoice.PaymentRequest)
-	}
-
-	mox.xmpp.Money.InvoiceHandler = func(inv *money.Invoice) {
-		binvoice := mox.lightning.Decode(inv.Invoice)
-		log.Printf("%s sent us an invoice for %d! Paying!", inv.JID, binvoice.Amount.Sat())
-		err := mox.lightning.PayInvoice(inv.Invoice)
+	mox.xmpp.Payments.InvoiceRequestHandler = func(req *payments.InvoiceRequest) {
+		invoice := mox.payments.IssueInvoice(req.Amount, "", time.Hour)
+		err := req.SendInvoice(invoice.PaymentRequest)
 		if err != nil {
-			log.Println("Error paying invoice:", err)
+			log.Println("Error sending invoice:", err)
 		}
 	}
 

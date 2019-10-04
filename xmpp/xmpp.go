@@ -6,7 +6,7 @@ import (
 	"github.com/cryptopunkscc/go-xmppc/components/ping"
 	"github.com/cryptopunkscc/go-xmppc/components/presence"
 	"github.com/cryptopunkscc/go-xmppc/components/roster"
-	"github.com/cryptopunkscc/mox/xmpp/money"
+	"github.com/cryptopunkscc/mox/payments"
 	"log"
 	"time"
 )
@@ -19,7 +19,7 @@ type XMPP struct {
 	session  xmppc.Session
 	Presence presence.Presence
 	Roster   roster.Roster
-	Money    *money.Money
+	Payments *payments.Component
 }
 
 func (xmpp *XMPP) Online(s xmppc.Session) {
@@ -42,14 +42,14 @@ func (xmpp *XMPP) HandleStanza(s xmpp.Stanza) {
 
 func NewXMPP(cfg *Config) *XMPP {
 	xmpp := &XMPP{
-		cfg:   cfg,
-		Money: &money.Money{},
+		cfg:      cfg,
+		Payments: &payments.Component{},
 	}
 	xmpp.Add(xmpp)
 	xmpp.Add(&ping.Ping{})
 	xmpp.Add(&xmpp.Presence)
 	xmpp.Add(&xmpp.Roster)
-	xmpp.Add(xmpp.Money)
+	xmpp.Add(xmpp.Payments)
 
 	return xmpp
 }
