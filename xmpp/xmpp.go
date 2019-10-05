@@ -17,8 +17,9 @@ type XMPP struct {
 	xmppc.Broadcast
 	cfg      *Config
 	session  xmppc.Session
-	Presence presence.Presence
-	Roster   roster.Roster
+	Ping     *ping.Ping
+	Presence *presence.Presence
+	Roster   *roster.Roster
 	Payments *payments.Component
 }
 
@@ -41,17 +42,27 @@ func (xmpp *XMPP) HandleStanza(s xmpp.Stanza) {
 }
 
 func NewXMPP(cfg *Config) *XMPP {
-	xmpp := &XMPP{
+	x := &XMPP{
 		cfg:      cfg,
 		Payments: &payments.Component{},
 	}
-	xmpp.Add(xmpp)
-	xmpp.Add(&ping.Ping{})
-	xmpp.Add(&xmpp.Presence)
-	xmpp.Add(&xmpp.Roster)
-	xmpp.Add(xmpp.Payments)
+	x.Add(x)
 
-	return xmpp
+	// Setup ping component
+	x.Ping = &ping.Ping{}
+	x.Add(x.Ping)
+
+	// Set up presence component
+	x.Presence = &presence.Presence{}
+	x.Add(x.Presence)
+
+	// Set up roster component
+	x.Roster = &roster.Roster{}
+	x.Add(x.Roster)
+
+	x.Add(x.Payments)
+
+	return x
 }
 
 func (xmpp *XMPP) Connect() error {
@@ -65,7 +76,7 @@ func (xmpp *XMPP) Connect() error {
 
 func (xmpp *XMPP) reconnect() {
 	<-time.After(reconnectInterval)
-	log.Println(("Reconnecting..."))
+	log.Println("Reconnecting...")
 	if err := xmpp.Connect(); err != nil {
 		log.Printf("Error reconnecting: %s. Retrying in %s.\n", err.Error(), reconnectInterval)
 		go xmpp.reconnect()
