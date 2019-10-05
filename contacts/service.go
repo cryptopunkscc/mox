@@ -1,4 +1,4 @@
-package roster
+package contacts
 
 import (
 	"errors"
@@ -12,6 +12,7 @@ type Service struct {
 	Roster   *roster.Roster
 	Presence *presence.Presence
 
+	self     *contact
 	contacts map[xmpp.JID]*contact
 	mu       sync.Mutex
 }
@@ -23,6 +24,15 @@ type Contact struct {
 	Status string
 }
 
+func (srv *Service) Me() Contact {
+	return Contact{
+		JID:    srv.self.JID,
+		Name:   srv.self.Name,
+		Online: srv.self.Online(),
+		Status: srv.self.Status(),
+	}
+}
+
 func (srv *Service) AvailableContacts() []Contact {
 	res := make([]Contact, 0)
 	for _, c := range srv.contacts {
@@ -30,7 +40,7 @@ func (srv *Service) AvailableContacts() []Contact {
 			JID:    c.JID,
 			Name:   c.Name,
 			Online: c.Online(),
-			Status: c.BestResource().Status,
+			Status: c.Status(),
 		})
 	}
 	return res
@@ -86,9 +96,20 @@ func (srv *Service) Fetch() {
 	srv.Roster.FetchRoster(srv.patchRoster)
 }
 
+func (srv *Service) SetJID(jid xmpp.JID) {
+	srv.self = &contact{
+		JID: jid,
+	}
+}
+
 func (srv *Service) UpdatePresence(update *presence.Update) {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
+
+	if update.JID.Bare() == srv.self.JID.Bare() {
+		srv.self.UpdatePresence(update)
+		return
+	}
 
 	bare := update.JID.Bare()
 	if srv.contacts == nil {
@@ -114,6 +135,9 @@ func (srv *Service) patchRoster(list []*roster.RosterItem) {
 		c.Remove = true
 	}
 	for _, item := range list {
+		if item.JID.Bare() == srv.self.JID {
+			continue
+		}
 		if _, found := srv.contacts[item.JID]; !found {
 			srv.contacts[item.JID] = &contact{}
 		}

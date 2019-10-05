@@ -1,4 +1,4 @@
-package roster
+package contacts
 
 import (
 	"github.com/cryptopunkscc/go-xmpp"
@@ -29,6 +29,13 @@ func (c *contact) Online() bool {
 		}
 	}
 	return false
+}
+
+func (c *contact) Status() string {
+	if best := c.BestResource(); best != nil {
+		return best.Status
+	}
+	return ""
 }
 
 func (c *contact) UpdatePresence(update *presence.Update) {

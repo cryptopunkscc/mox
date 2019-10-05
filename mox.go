@@ -8,8 +8,8 @@ import (
 	"github.com/cryptopunkscc/go-xmppc/bot"
 	"github.com/cryptopunkscc/go-xmppc/components/presence"
 	"github.com/cryptopunkscc/mox/adminbot"
+	"github.com/cryptopunkscc/mox/contacts"
 	"github.com/cryptopunkscc/mox/payments"
-	"github.com/cryptopunkscc/mox/roster"
 	xmppmox "github.com/cryptopunkscc/mox/xmpp"
 	"log"
 	"time"
@@ -20,13 +20,14 @@ type Mox struct {
 	ln       bitcoin.LightningClient
 	bot      *bot.Bot
 	payments *payments.Service
-	roster   *roster.Service
+	contacts *contacts.Service
 
 	quit chan bool
 }
 
-func (mox *Mox) Online(xmppc.Session) {
-	mox.roster.Fetch()
+func (mox *Mox) Online(s xmppc.Session) {
+	mox.contacts.SetJID(s.JID())
+	mox.contacts.Fetch()
 }
 
 func (mox *Mox) HandleStanza(xmpp.Stanza) {
@@ -46,15 +47,14 @@ func New(cfg *Config) (*Mox, error) {
 		Component:       mox.xmpp.Payments,
 		LightningClient: lnc,
 	}
-	mox.roster = &roster.Service{
+	mox.contacts = &contacts.Service{
 		Roster:   mox.xmpp.Roster,
 		Presence: mox.xmpp.Presence,
 	}
 	mox.bot = bot.New(&adminbot.Engine{
 		PaymentsService: mox.payments,
 		Presence:        mox.xmpp.Presence,
-		Money:           mox.xmpp.Payments,
-		RosterService:   mox.roster,
+		Contacts:        mox.contacts,
 	})
 
 	mox.xmpp.Payments.InvoiceRequestHandler = func(req *payments.InvoiceRequest) {
@@ -70,7 +70,7 @@ func New(cfg *Config) (*Mox, error) {
 	}
 
 	mox.xmpp.Presence.UpdateHandler = func(update *presence.Update) {
-		mox.roster.UpdatePresence(update)
+		mox.contacts.UpdatePresence(update)
 	}
 
 	mox.xmpp.Add(mox)

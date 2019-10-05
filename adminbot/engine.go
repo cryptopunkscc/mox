@@ -5,16 +5,15 @@ import (
 	"github.com/cryptopunkscc/go-xmpp"
 	chatbot "github.com/cryptopunkscc/go-xmppc/bot"
 	"github.com/cryptopunkscc/go-xmppc/components/presence"
+	"github.com/cryptopunkscc/mox/contacts"
 	"github.com/cryptopunkscc/mox/payments"
-	"github.com/cryptopunkscc/mox/roster"
 	"time"
 )
 
 type Engine struct {
 	Presence        *presence.Presence
-	Money           *payments.Component
 	PaymentsService *payments.Service
-	RosterService   *roster.Service
+	Contacts        *contacts.Service
 }
 
 func (e *Engine) Balance(ctx *chatbot.Context) {
@@ -23,11 +22,8 @@ func (e *Engine) Balance(ctx *chatbot.Context) {
 }
 
 func (e *Engine) Status(ctx *chatbot.Context, status string) {
-	if status == "" {
-		e.Help(ctx, "status")
-		return
-	}
 	e.Presence.SetStatus(status)
+	ctx.Reply("Status set.")
 }
 
 func (e *Engine) Issue(ctx *chatbot.Context, sats int, memo string) {
@@ -59,10 +55,10 @@ func (e *Engine) Send(ctx *chatbot.Context, jid string, amount int) {
 	ctx.Reply("Payment sent!")
 }
 
-func (e *Engine) Contacts(ctx *chatbot.Context) {
-	contacts := e.RosterService.AvailableContacts()
+func (e *Engine) List(ctx *chatbot.Context) {
+	list := e.Contacts.AvailableContacts()
 
-	for _, c := range contacts {
+	for _, c := range list {
 		var online, status string
 		if c.Online {
 			online = "*"
@@ -74,8 +70,13 @@ func (e *Engine) Contacts(ctx *chatbot.Context) {
 	}
 }
 
+func (e *Engine) Info(ctx *chatbot.Context) {
+	me := e.Contacts.Me()
+	ctx.Reply("%s (%s)", me.JID, me.Status)
+}
+
 func (e *Engine) Add(ctx *chatbot.Context, jid string, name string) {
-	err := e.RosterService.AddContact(xmpp.JID(jid), name)
+	err := e.Contacts.AddContact(xmpp.JID(jid), name)
 	if err != nil {
 		ctx.Reply("Failed to add contact: %s", err)
 		return
@@ -84,7 +85,7 @@ func (e *Engine) Add(ctx *chatbot.Context, jid string, name string) {
 }
 
 func (e *Engine) Remove(ctx *chatbot.Context, jid string) {
-	err := e.RosterService.RemoveContact(xmpp.JID(jid))
+	err := e.Contacts.RemoveContact(xmpp.JID(jid))
 	if err != nil {
 		ctx.Reply("Failed to remove contact: %s", err)
 		return
