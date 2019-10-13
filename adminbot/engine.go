@@ -10,53 +10,61 @@ import (
 	"time"
 )
 
+var _ chatbot.Engine = &Engine{}
+
 type Engine struct {
+	chatbot.ChatWriter
 	Presence        *presence.Presence
 	PaymentsService *payments.Service
 	Contacts        *contacts.Service
 }
 
-func (e *Engine) Balance(ctx *chatbot.Context) {
+func (e *Engine) Online(writer chatbot.ChatWriter) {
+	e.ChatWriter = writer
+}
+
+func (e *Engine) Offline(error) {
+	e.ChatWriter = nil
+}
+
+func (e *Engine) Balance(ctx *chatbot.Context) error {
 	balance := e.PaymentsService.Balance()
-	ctx.Reply("Your balance is %d SAT", balance.Sat())
+	return ctx.Reply("Your balance is %d SAT", balance.Sat())
 }
 
-func (e *Engine) Status(ctx *chatbot.Context, status string) {
+func (e *Engine) Status(ctx *chatbot.Context, status string) error {
 	e.Presence.SetStatus(status)
-	ctx.Reply("Status set.")
+	return ctx.Reply("Status set.")
 }
 
-func (e *Engine) Issue(ctx *chatbot.Context, sats int, memo string) {
+func (e *Engine) Issue(ctx *chatbot.Context, sats int, memo string) error {
 	if sats <= 0 {
-		ctx.Reply("Amount must be greater than 0.")
-		return
+		return ctx.Reply("Amount must be greater than 0.")
 	}
 	invoice := e.PaymentsService.IssueInvoice(bitcoin.Sat(int64(sats)), memo, 24*time.Hour)
-	ctx.Reply("Here's your invoice:\n%s", invoice.PaymentRequest)
+	return ctx.Reply("Here's your invoice:\n%s", invoice.PaymentRequest)
 }
 
-func (e *Engine) Pay(ctx *chatbot.Context, invoice string) {
+func (e *Engine) Pay(ctx *chatbot.Context, invoice string) error {
 	err := e.PaymentsService.PayInvoice(invoice)
 	if err == nil {
-		ctx.Reply("Invoice paid!")
-		return
+		return ctx.Reply("Invoice paid!")
 	}
-	ctx.Reply("Failed to pay the invoice: %s", err.Error())
+	return ctx.Reply("Failed to pay the invoice: %s", err.Error())
 }
 
-func (e *Engine) Send(ctx *chatbot.Context, jid string, amount int) {
+func (e *Engine) Send(ctx *chatbot.Context, jid string, amount int) error {
 	err := e.PaymentsService.SendBitcoin(xmpp.JID(jid), bitcoin.Sat(int64(amount)))
 
 	if err != nil {
-		ctx.Reply("Error sending money: %s", err.Error())
-		return
+		return ctx.Reply("Error sending money: %s", err.Error())
 	}
 
-	ctx.Reply("Payment sent!")
+	return ctx.Reply("Payment sent!")
 }
 
-func (e *Engine) List(ctx *chatbot.Context) {
-	list := e.Contacts.AvailableContacts()
+func (e *Engine) List(ctx *chatbot.Context) error {
+	list := e.Contacts.Contacts(contacts.All)
 
 	for _, c := range list {
 		var online, status string
@@ -66,45 +74,44 @@ func (e *Engine) List(ctx *chatbot.Context) {
 		if c.Status != "" {
 			status = "(" + c.Status + ")"
 		}
-		ctx.Reply("[%s%s] %s %s", c.JID, online, c.Name, status)
+		_ = ctx.Reply("[%s%s] %s %s", c.JID, online, c.Name, status)
 	}
+	return nil
 }
 
-func (e *Engine) Info(ctx *chatbot.Context) {
+func (e *Engine) Info(ctx *chatbot.Context) error {
 	me := e.Contacts.Me()
-	ctx.Reply("%s (%s)", me.JID, me.Status)
+	return ctx.Reply("%s (%s)", me.JID, me.Status)
 }
 
-func (e *Engine) Add(ctx *chatbot.Context, jid string, name string) {
+func (e *Engine) Add(ctx *chatbot.Context, jid string, name string) error {
 	err := e.Contacts.AddContact(xmpp.JID(jid), name)
 	if err != nil {
-		ctx.Reply("Failed to add contact: %s", err)
-		return
+		return ctx.Reply("Failed to add contact: %s", err)
 	}
-	ctx.Reply("Contact added.")
+	return ctx.Reply("Contact added.")
 }
 
-func (e *Engine) Remove(ctx *chatbot.Context, jid string) {
+func (e *Engine) Remove(ctx *chatbot.Context, jid string) error {
 	err := e.Contacts.RemoveContact(xmpp.JID(jid))
 	if err != nil {
-		ctx.Reply("Failed to remove contact: %s", err)
-		return
+		return ctx.Reply("Failed to remove contact: %s", err)
 	}
-	ctx.Reply("Contact removed.")
+	return ctx.Reply("Contact removed.")
 }
 
-func (e *Engine) Help(ctx *chatbot.Context, topic string) {
+func (e *Engine) Help(ctx *chatbot.Context, topic string) error {
 	switch topic {
 	case "":
-		ctx.Reply(
+		return ctx.Reply(
 			"Commands:\n" +
 				"status <status_text> - set XMPP status\n" +
 				"balance - check your lightning balance\n" +
 				"issue <amount> [memo] - issue a lightning invoice\n" +
 				"pay <invoice> - pay a lightning invoice")
 	case "status":
-		ctx.Reply("Usage: status <status_text>")
+		return ctx.Reply("Usage: status <status_text>")
 	default:
-		ctx.Reply("unknown help topic")
+		return ctx.Reply("unknown help topic")
 	}
 }

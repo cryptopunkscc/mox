@@ -1,26 +1,27 @@
 package mox
 
 import (
-	"github.com/cryptopunkscc/go-bitcoin"
-	"github.com/cryptopunkscc/go-bitcoin/lnd"
-	xmpp "github.com/cryptopunkscc/go-xmpp"
+	"log"
+	"os"
+	"time"
+
+	"github.com/cryptopunkscc/go-xmpp"
 	"github.com/cryptopunkscc/go-xmppc"
 	"github.com/cryptopunkscc/go-xmppc/bot"
 	"github.com/cryptopunkscc/go-xmppc/components/presence"
 	"github.com/cryptopunkscc/mox/adminbot"
 	"github.com/cryptopunkscc/mox/contacts"
 	"github.com/cryptopunkscc/mox/payments"
+	"github.com/cryptopunkscc/mox/wallet"
 	xmppmox "github.com/cryptopunkscc/mox/xmpp"
-	"log"
-	"time"
 )
 
 type Mox struct {
 	xmpp     *xmppmox.XMPP
-	ln       bitcoin.LightningClient
 	bot      *bot.Bot
 	payments *payments.Service
 	contacts *contacts.Service
+	wallet   *wallet.Service
 
 	quit chan bool
 }
@@ -30,32 +31,58 @@ func (mox *Mox) Online(s xmppc.Session) {
 	mox.contacts.Fetch()
 }
 
-func (mox *Mox) HandleStanza(xmpp.Stanza) {
+func (mox *Mox) HandleStanza(s xmpp.Stanza) {
 }
 
 func (mox *Mox) Offline(error) {
 }
 
 func New(cfg *Config) (*Mox, error) {
-	lnc, _ := lnd.Connect(cfg.LND)
+	var err error
+
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+
+	xmppClient := xmppmox.NewXMPP(cfg.XMPP)
+
 	mox := &Mox{
 		quit: make(chan bool),
-		xmpp: xmppmox.NewXMPP(cfg.XMPP),
-		ln:   lnc,
+		xmpp: xmppClient,
 	}
+
+	// Set up wallet service
+	mox.wallet, err = wallet.New(cfg.Wallet)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set up payments service
 	mox.payments = &payments.Service{
-		Component:       mox.xmpp.Payments,
-		LightningClient: lnc,
+		Component: mox.xmpp.Payments,
+		Wallet:    mox.wallet,
 	}
+
+	// Set up contacts service
 	mox.contacts = &contacts.Service{
 		Roster:   mox.xmpp.Roster,
 		Presence: mox.xmpp.Presence,
 	}
+
+	// Set up admin bot
 	mox.bot = bot.New(&adminbot.Engine{
 		PaymentsService: mox.payments,
 		Presence:        mox.xmpp.Presence,
 		Contacts:        mox.contacts,
 	})
+
+	//mox.ln.SetInvoiceHandler(func(i *bitcoin.Invoice) {
+	//	if i.Paid() {
+	//		bytes, _ := json.MarshalIndent(i, "", "  ")
+	//		fmt.Println(string(bytes))
+	//		_ = mox.bot.Send("arashi@cryptopunks.cc", "Received %d SAT", i.Amount.Sat())
+	//	}
+	//})
 
 	mox.xmpp.Payments.InvoiceRequestHandler = func(req *payments.InvoiceRequest) {
 		invoice := mox.payments.IssueInvoice(req.Amount, "", time.Hour)
@@ -79,6 +106,6 @@ func New(cfg *Config) (*Mox, error) {
 }
 
 func (mox *Mox) Run() {
-	mox.xmpp.Connect()
+	_ = mox.xmpp.Connect()
 	<-mox.quit
 }

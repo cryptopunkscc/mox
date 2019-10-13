@@ -1,20 +1,21 @@
 package mox
 
 import (
-	"encoding/json"
 	"errors"
+	"github.com/cryptopunkscc/mox/wallet"
 	"io/ioutil"
 
-	"github.com/cryptopunkscc/mox/rpcserver"
-
 	"github.com/cryptopunkscc/go-bitcoin/lnd"
+	"github.com/cryptopunkscc/mox/rpcserver"
 	"github.com/cryptopunkscc/mox/xmpp"
+	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
-	RPC  *rpcserver.Config `json:"rpc"`
-	XMPP *xmpp.Config      `json:"xmpp"`
-	LND  *lnd.Config       `json:"lnd"`
+	RPC    *rpcserver.Config `yaml:"rpc"`
+	XMPP   *xmpp.Config      `yaml:"xmpp"`
+	LND    *lnd.Config       `yaml:"lnd"`
+	Wallet *wallet.Config    `yaml:"wallet"`
 }
 
 func LoadConfig(configFile string) *Config {
@@ -23,7 +24,7 @@ func LoadConfig(configFile string) *Config {
 		panic(err)
 	}
 	cfg := &Config{}
-	err = json.Unmarshal(bytes, cfg)
+	err = yaml.Unmarshal(bytes, cfg)
 	if err != nil {
 		panic(err)
 	}
@@ -31,19 +32,25 @@ func LoadConfig(configFile string) *Config {
 }
 
 func (cfg *Config) Validate() error {
+	// Validate XMPP config
 	if err := cfg.XMPP.Validate(); err != nil {
 		return err
 	}
+
+	// Validate RPC config
 	if cfg.RPC != nil {
 		if err := cfg.RPC.Validate(); err != nil {
 			return err
 		}
 	}
-	if cfg.LND == nil {
-		return errors.New("LND config missing")
+
+	// Validate Wallet config
+	if cfg.Wallet == nil {
+		return errors.New("wallet config missing")
 	}
-	if err := cfg.LND.Validate(); err != nil {
+	if err := cfg.Wallet.Validate(); err != nil {
 		return err
 	}
+
 	return nil
 }

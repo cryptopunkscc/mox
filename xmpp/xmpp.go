@@ -12,15 +12,17 @@ import (
 )
 
 const reconnectInterval = 5 * time.Second
+const defaultResource = "mox"
 
 type XMPP struct {
-	xmppc.Broadcast
-	cfg      *Config
-	session  xmppc.Session
 	Ping     *ping.Ping
 	Presence *presence.Presence
 	Roster   *roster.Roster
 	Payments *payments.Component
+
+	cfg     *Config
+	session xmppc.Session
+	xmppc.Broadcast
 }
 
 func (xmpp *XMPP) Online(s xmppc.Session) {
@@ -42,10 +44,7 @@ func (xmpp *XMPP) HandleStanza(s xmpp.Stanza) {
 }
 
 func NewXMPP(cfg *Config) *XMPP {
-	x := &XMPP{
-		cfg:      cfg,
-		Payments: &payments.Component{},
-	}
+	x := &XMPP{cfg: cfg}
 	x.Add(x)
 
 	// Setup ping component
@@ -60,14 +59,20 @@ func NewXMPP(cfg *Config) *XMPP {
 	x.Roster = &roster.Roster{}
 	x.Add(x.Roster)
 
+	// Set up payments component
+	x.Payments = &payments.Component{}
 	x.Add(x.Payments)
 
 	return x
 }
 
 func (xmpp *XMPP) Connect() error {
+	jid := xmpp.cfg.JID
+	if jid.Resource() == "" {
+		jid = jid + "/" + defaultResource
+	}
 	xmppConfig := &xmppc.Config{
-		JID:      xmpp.cfg.JID,
+		JID:      jid,
 		Password: xmpp.cfg.Password,
 	}
 

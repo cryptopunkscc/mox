@@ -33,9 +33,25 @@ func (srv *Service) Me() Contact {
 	}
 }
 
-func (srv *Service) AvailableContacts() []Contact {
+type contactFilter func(c *contact) bool
+
+var All, Online contactFilter
+
+func init() {
+	All = func(*contact) bool {
+		return true
+	}
+	Online = func(c *contact) bool {
+		return c.Online()
+	}
+}
+
+func (srv *Service) Contacts(filter contactFilter) []Contact {
 	res := make([]Contact, 0)
 	for _, c := range srv.contacts {
+		if !filter(c) {
+			continue
+		}
 		res = append(res, Contact{
 			JID:    c.JID,
 			Name:   c.Name,

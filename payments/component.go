@@ -68,7 +68,7 @@ func (m *Component) RequestInvoice(req *InvoiceRequest, handler InvoiceHandler) 
 			Amount: int(req.Amount.Msat()),
 		},
 	})
-	_, err := m.Write(msg)
+	err := m.Write(msg)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (m *Component) SendInvoice(invoice *Invoice) error {
 			Encoded: invoice.Invoice,
 		},
 	})
-	_, err := m.Write(msg)
+	err := m.Write(msg)
 	if err != nil {
 		return err
 	}
@@ -98,6 +98,9 @@ func (m *Component) SendInvoice(invoice *Invoice) error {
 }
 
 func (m *Component) HandleMessage(msg *xmpp.Message) {
+	if !msg.Normal() {
+		return
+	}
 	if _, ok := msg.Child(&XMPPBitcoin{}).(*XMPPBitcoin); ok {
 		m.handleBitcoin(msg)
 	}
