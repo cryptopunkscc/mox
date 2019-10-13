@@ -2,15 +2,16 @@
 
 ## <span style="color:red">EXPERIMENTAL CODE - EXPECT SERIOUS ISSUES</span>
 
-## What?
-
-Mox let's you connect your LND node to your XMPP account, so that you can send satoshis to an XMPP address.
-
 ## Why?
 
-It's convenient. You can exchange money using a very familiar email-like address. You can have a setup where you can use a single address for email, chat and money!
+Exchanging bitcoin addresses and lightning invoices is cumbersome and a user experience problem. It would be
+much better to have a reusable, decentralized bitcoin handle that you can publicly disclose without harm
+to your privacy.
 
-It's more private. You can post your XMPP address to receive donations without publicly disclosing any bitcoin addresses.
+## What?
+
+Mox let's you connect your LND node to your XMPP address, so that you can send satoshis to an address that looks
+like a regular email address!
 
 ## How?
 
@@ -19,29 +20,36 @@ It's more private. You can post your XMPP address to receive donations without p
 ```sh
 $ git clone https://github.com/cryptopunkscc/mox
 $ cd mox
-$ go build ./cmd/moxd
-$ go build ./cmd/mox-cli
+$ make
 ```
 
 ### Config file
 
-```json
-{
-  "xmpp": {
-    "jid": "<jid>",
-    "password": "<password>"
-  },
-  "chatbot": {
-    "admin_jid": "<jid>"
-  },
-  "lnd": {
-    "host": "localhost",
-    "port": 10009,
-    "macaroon": "/path/to/admin.macaroon",
-    "cert": "/path/to/tls.cert"
-  }
-}
+The minimal config file:
 
+```yaml
+xmpp:
+  jid: "yourjid@somehost.example"
+  password: "xmpppassword"
+wallet:
+  backend: "lnd"
+```
+
+You can use a non-standard LND directory:
+
+```yaml
+wallet:
+  lnddir: "/home/user/.lnd-alt"
+```
+
+If you need to connect to a remote LND node:
+
+```yaml
+wallet:
+  host: "lnd.myserver.example"
+  port: 10009,
+  cert: "/path/to/tls.cert"
+  macaroon: "/path/to/admin.macaroon"
 ```
 
 ### Run
