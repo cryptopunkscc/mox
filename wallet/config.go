@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"errors"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -29,10 +30,10 @@ func (cfg *Config) Validate() error {
 	if (cfg.getPort() < 1) || (cfg.Port > 65535) {
 		return errors.New("wallet: invalid port")
 	}
-	if _, err := os.Stat(cfg.getMacaroon()); os.IsNotExist(err) {
+	if _, err := os.Stat(cfg.getMacaroonPath()); os.IsNotExist(err) {
 		return errors.New("wallet: macaroon file does not exist")
 	}
-	if _, err := os.Stat(cfg.getCert()); os.IsNotExist(err) {
+	if _, err := os.Stat(cfg.getCertPath()); os.IsNotExist(err) {
 		return errors.New("wallet: cert file does not exist")
 	}
 	return nil
@@ -69,7 +70,7 @@ func (cfg *Config) getLNDDir() string {
 	return ""
 }
 
-func (cfg *Config) getMacaroon() string {
+func (cfg *Config) getMacaroonPath() string {
 	if cfg.Macaroon != "" {
 		return cfg.Macaroon
 	}
@@ -79,7 +80,7 @@ func (cfg *Config) getMacaroon() string {
 	return ""
 }
 
-func (cfg *Config) getCert() string {
+func (cfg *Config) getCertPath() string {
 	if cfg.Cert != "" {
 		return cfg.Cert
 	}
@@ -87,4 +88,28 @@ func (cfg *Config) getCert() string {
 		return filepath.Join(lnddir, "tls.cert")
 	}
 	return ""
+}
+
+func (cfg *Config) getMacaroon() []byte {
+	path := cfg.getMacaroonPath()
+	if path == "" {
+		return nil
+	}
+	bytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	return bytes
+}
+
+func (cfg *Config) getCert() []byte {
+	path := cfg.getCertPath()
+	if path == "" {
+		return nil
+	}
+	bytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	return bytes
 }

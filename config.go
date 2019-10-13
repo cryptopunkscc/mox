@@ -32,19 +32,19 @@ func LoadConfig(configFile string) *Config {
 }
 
 func (cfg *Config) Validate() error {
-	// Validate XMPP config
+	// validate XMPP config
 	if err := cfg.XMPP.Validate(); err != nil {
 		return err
 	}
 
-	// Validate RPC config
+	// validate RPC config
 	if cfg.RPC != nil {
 		if err := cfg.RPC.Validate(); err != nil {
 			return err
 		}
 	}
 
-	// Validate Wallet config
+	// validate Wallet config
 	if cfg.Wallet == nil {
 		return errors.New("wallet config missing")
 	}

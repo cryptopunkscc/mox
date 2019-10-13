@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 
 	"github.com/cryptopunkscc/mox"
 )
@@ -17,7 +18,7 @@ func main() {
 	cfg := mox.LoadConfig(configFile)
 	app, err := mox.New(cfg)
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error initializing moxd: %s", err)
 	}
 	app.Run()
 }

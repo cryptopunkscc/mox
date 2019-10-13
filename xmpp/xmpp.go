@@ -28,7 +28,7 @@ type XMPP struct {
 func (xmpp *XMPP) Online(s xmppc.Session) {
 	xmpp.session = s
 
-	log.Println("Connected as", s.JID())
+	log.Println("XMPP bound to", s.JID())
 }
 
 func (xmpp *XMPP) Offline(err error) {
