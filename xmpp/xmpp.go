@@ -40,6 +40,13 @@ func (xmpp *XMPP) Offline(err error) {
 	}
 }
 
+func (xmpp *XMPP) JID() xmpp.JID {
+	if xmpp.session == nil {
+		return ""
+	}
+	return xmpp.session.JID()
+}
+
 func (xmpp *XMPP) HandleStanza(s xmpp.Stanza) {
 }
 

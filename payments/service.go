@@ -2,12 +2,13 @@ package payments
 
 import (
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/cryptopunkscc/go-bitcoin"
 	"github.com/cryptopunkscc/go-xmpp"
 	"github.com/cryptopunkscc/mox/wallet"
 	"github.com/google/uuid"
-	"log"
-	"time"
 )
 
 type Service struct {
