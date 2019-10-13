@@ -2,7 +2,6 @@ package mox
 
 import (
 	"log"
-	"os"
 	"time"
 
 	"github.com/cryptopunkscc/go-xmpp"
