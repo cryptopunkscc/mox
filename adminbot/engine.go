@@ -3,10 +3,11 @@ package adminbot
 import (
 	"github.com/cryptopunkscc/go-bitcoin"
 	"github.com/cryptopunkscc/go-xmpp"
-	chatbot "github.com/cryptopunkscc/go-xmppc/bot"
-	"github.com/cryptopunkscc/go-xmppc/components/presence"
+	chatbot "github.com/cryptopunkscc/go-xmpp/client/bot"
+	"github.com/cryptopunkscc/go-xmpp/client/components/presence"
 	"github.com/cryptopunkscc/mox/contacts"
 	"github.com/cryptopunkscc/mox/payments"
+	"github.com/cryptopunkscc/mox/wallet"
 	"time"
 )
 
@@ -17,6 +18,7 @@ type Engine struct {
 	Presence        *presence.Presence
 	PaymentsService *payments.Service
 	Contacts        *contacts.Service
+	Wallet          *wallet.Service
 }
 
 func (e *Engine) Online(writer chatbot.ChatWriter) {
@@ -98,6 +100,27 @@ func (e *Engine) Remove(ctx *chatbot.Context, jid string) error {
 		return ctx.Reply("Failed to remove contact: %s", err)
 	}
 	return ctx.Reply("Contact removed.")
+}
+
+func (e *Engine) ChainBalance(ctx *chatbot.Context) error {
+	balance := e.Wallet.ChainBalance()
+	return ctx.Reply("Your on-chain balance is %d SAT", balance.Sat())
+}
+
+func (e *Engine) ChainAddress(ctx *chatbot.Context) error {
+	addr, err := e.Wallet.NewAddress()
+	if err != nil {
+		return ctx.Reply("Couldn't get new address: %s", err)
+	}
+	return ctx.Reply(addr)
+}
+
+func (e *Engine) ChainSend(ctx *chatbot.Context, addr string, amount int, feeRate int) error {
+	txid, err := e.Wallet.ChainSend(addr, bitcoin.Sat(int64(amount)), feeRate)
+	if err != nil {
+		return ctx.Reply("Failed to send money: %s", err)
+	}
+	return ctx.Reply("Money sent! Transaction id: %s", txid)
 }
 
 func (e *Engine) Help(ctx *chatbot.Context, topic string) error {

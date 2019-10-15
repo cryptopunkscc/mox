@@ -61,3 +61,16 @@ func (srv *Service) IssueInvoice(amount bitcoin.Amount, memo string, validFor ti
 func (srv *Service) PayInvoice(invoice string) error {
 	return srv.wallet.Lightning().Pay(context.Background(), invoice)
 }
+
+func (srv *Service) ChainBalance() bitcoin.Amount {
+	b, _ := srv.wallet.Blockchain().Balance(context.Background())
+	return b
+}
+
+func (srv *Service) NewAddress() (string, error) {
+	return srv.wallet.Blockchain().NewAddress(context.Background(), bitcoin.P2WKH)
+}
+
+func (srv *Service) ChainSend(addr string, amount bitcoin.Amount, feeRate int) (string, error) {
+	return srv.wallet.Blockchain().Send(context.Background(), addr, amount, feeRate)
+}

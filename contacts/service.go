@@ -3,8 +3,8 @@ package contacts
 import (
 	"errors"
 	"github.com/cryptopunkscc/go-xmpp"
-	"github.com/cryptopunkscc/go-xmppc/components/presence"
-	"github.com/cryptopunkscc/go-xmppc/components/roster"
+	"github.com/cryptopunkscc/go-xmpp/client/components/presence"
+	"github.com/cryptopunkscc/go-xmpp/client/components/roster"
 	"sync"
 )
 

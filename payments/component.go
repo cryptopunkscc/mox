@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/cryptopunkscc/go-bitcoin"
 	"github.com/cryptopunkscc/go-xmpp"
-	"github.com/cryptopunkscc/go-xmppc"
+	"github.com/cryptopunkscc/go-xmpp/client"
 )
 
 // Check if Component satisfies the Handler interface

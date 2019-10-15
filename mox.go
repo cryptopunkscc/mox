@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/cryptopunkscc/go-xmpp"
-	"github.com/cryptopunkscc/go-xmppc"
-	"github.com/cryptopunkscc/go-xmppc/bot"
-	"github.com/cryptopunkscc/go-xmppc/components/presence"
+	"github.com/cryptopunkscc/go-xmpp/client"
+	"github.com/cryptopunkscc/go-xmpp/client/bot"
+	"github.com/cryptopunkscc/go-xmpp/client/components/presence"
 	"github.com/cryptopunkscc/mox/adminbot"
 	"github.com/cryptopunkscc/mox/contacts"
 	"github.com/cryptopunkscc/mox/payments"
@@ -73,6 +73,7 @@ func New(cfg *Config) (*Mox, error) {
 		PaymentsService: mox.payments,
 		Presence:        mox.xmpp.Presence,
 		Contacts:        mox.contacts,
+		Wallet:          mox.wallet,
 	})
 
 	//mox.ln.SetInvoiceHandler(func(i *bitcoin.Invoice) {
