@@ -8,6 +8,7 @@ import (
 type Config struct {
 	JID      xmpp.JID `yaml:"jid"`
 	Password string   `yaml:"password"`
+	Log      string   `yaml:"log"`
 }
 
 func (cfg *Config) Validate() error {

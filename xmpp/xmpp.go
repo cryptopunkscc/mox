@@ -6,7 +6,9 @@ import (
 	"github.com/cryptopunkscc/go-xmpp/ext/presence"
 	"github.com/cryptopunkscc/go-xmpp/ext/roster"
 	"github.com/cryptopunkscc/mox/payments"
+	"io"
 	"log"
+	"os"
 	"time"
 )
 
@@ -77,9 +79,20 @@ func (x *XMPP) Connect() error {
 	if jid.Resource() == "" {
 		jid = jid + "/" + defaultResource
 	}
+	var logWriter io.Writer
+	if x.cfg.Log != "" {
+		var err error
+		logWriter, err = os.OpenFile(x.cfg.Log, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		logWriter.Write([]byte("\n\n*** SESSION START ***\n\n"))
+		if err != nil {
+			log.Println("Warning: error opening XMPP log file:", err)
+			logWriter = nil
+		}
+	}
 	xmppConfig := &xmpp.Config{
 		JID:      jid,
 		Password: x.cfg.Password,
+		Log:      logWriter,
 	}
 
 	return xmpp.Open(&x.Broadcast, xmppConfig)
