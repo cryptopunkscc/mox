@@ -3,6 +3,7 @@ package wallet
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/cryptopunkscc/go-bitcoin"
 	"github.com/cryptopunkscc/go-bitcoin/lnd"
 	"log"
@@ -27,14 +28,16 @@ func New(cfg *Config) (*Service, error) {
 		return nil, err
 	}
 
-	network, _ := srv.wallet.Network(context.Background())
-	agent, _ := srv.wallet.Agent(context.Background())
-
+	network, err := srv.wallet.Network(context.Background())
+	if err != nil {
+		//TODO: display some help regarding wallet setup
+		return nil, fmt.Errorf("error connecting to wallet: %s", err)
+	}
 	if network != "testnet" {
 		return nil, errors.New("only testnet is supported")
 	}
-
-	log.Printf("Using bitcoin agent: %s on %s", agent, network)
+	agent, _ := srv.wallet.Agent(context.Background())
+	log.Printf("Using bitcoin wallet: %s on %s", agent, network)
 
 	return srv, nil
 }

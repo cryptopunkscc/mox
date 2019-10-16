@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"github.com/cryptopunkscc/go-bitcoin"
 	"github.com/cryptopunkscc/go-xmpp"
-	"github.com/cryptopunkscc/go-xmpp/client"
 )
 
 // Check if Component satisfies the Handler interface
-var _ xmppc.Handler = &Component{}
+var _ xmpp.Handler = &Component{}
 
 // Component provides methods to exchange XMPP packets
 type Component struct {
-	xmppc.Session
+	xmpp.Session
 	InvoiceRequestHandler
 
 	invoiceHandlers map[string]InvoiceHandler
@@ -72,7 +71,7 @@ func (m *Component) RequestInvoice(req *InvoiceRequest, handler InvoiceHandler) 
 	if err != nil {
 		return err
 	}
-	// Register handler under "<barejid> <id>" key to further protect from invoice request hijacking
+	// Register handler under "<BareJID> <ID>" key to further protect from invoice request hijacking
 	id := fmt.Sprintf("%s %s", req.JID.Bare(), req.ID)
 	m.addInvoiceHandler(id, handler)
 	return nil
@@ -107,10 +106,10 @@ func (m *Component) HandleMessage(msg *xmpp.Message) {
 }
 
 func (m *Component) HandleStanza(s xmpp.Stanza) {
-	xmppc.HandleStanza(m, s)
+	xmpp.HandleStanza(m, s)
 }
 
-func (m *Component) Online(s xmppc.Session) {
+func (m *Component) Online(s xmpp.Session) {
 	m.Session = s
 }
 

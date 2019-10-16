@@ -2,7 +2,7 @@ package contacts
 
 import (
 	"github.com/cryptopunkscc/go-xmpp"
-	"github.com/cryptopunkscc/go-xmpp/client/components/presence"
+	"github.com/cryptopunkscc/go-xmpp/ext/presence"
 	"time"
 )
 

@@ -2,10 +2,9 @@ package xmpp
 
 import (
 	"github.com/cryptopunkscc/go-xmpp"
-	"github.com/cryptopunkscc/go-xmpp/client"
-	"github.com/cryptopunkscc/go-xmpp/client/components/ping"
-	"github.com/cryptopunkscc/go-xmpp/client/components/presence"
-	"github.com/cryptopunkscc/go-xmpp/client/components/roster"
+	"github.com/cryptopunkscc/go-xmpp/ext/ping"
+	"github.com/cryptopunkscc/go-xmpp/ext/presence"
+	"github.com/cryptopunkscc/go-xmpp/ext/roster"
 	"github.com/cryptopunkscc/mox/payments"
 	"log"
 	"time"
@@ -21,33 +20,33 @@ type XMPP struct {
 	Payments *payments.Component
 
 	cfg     *Config
-	session xmppc.Session
-	xmppc.Broadcast
+	session xmpp.Session
+	xmpp.Broadcast
 }
 
-func (xmpp *XMPP) Online(s xmppc.Session) {
-	xmpp.session = s
+func (x *XMPP) Online(s xmpp.Session) {
+	x.session = s
 
 	log.Println("XMPP bound to", s.JID())
 }
 
-func (xmpp *XMPP) Offline(err error) {
+func (x *XMPP) Offline(err error) {
 	if err == nil {
 		log.Println("Disconnected.")
 	} else {
 		log.Printf("Disconnected (error: %s). Reconnecting in %s...\n", err.Error(), reconnectInterval)
-		go xmpp.reconnect()
+		go x.reconnect()
 	}
 }
 
-func (xmpp *XMPP) JID() xmpp.JID {
-	if xmpp.session == nil {
+func (x *XMPP) JID() xmpp.JID {
+	if x.session == nil {
 		return ""
 	}
-	return xmpp.session.JID()
+	return x.session.JID()
 }
 
-func (xmpp *XMPP) HandleStanza(s xmpp.Stanza) {
+func (x *XMPP) HandleStanza(s xmpp.Stanza) {
 }
 
 func NewXMPP(cfg *Config) *XMPP {
@@ -73,24 +72,24 @@ func NewXMPP(cfg *Config) *XMPP {
 	return x
 }
 
-func (xmpp *XMPP) Connect() error {
-	jid := xmpp.cfg.JID
+func (x *XMPP) Connect() error {
+	jid := x.cfg.JID
 	if jid.Resource() == "" {
 		jid = jid + "/" + defaultResource
 	}
-	xmppConfig := &xmppc.Config{
+	xmppConfig := &xmpp.Config{
 		JID:      jid,
-		Password: xmpp.cfg.Password,
+		Password: x.cfg.Password,
 	}
 
-	return xmppc.Open(&xmpp.Broadcast, xmppConfig)
+	return xmpp.Open(&x.Broadcast, xmppConfig)
 }
 
-func (xmpp *XMPP) reconnect() {
+func (x *XMPP) reconnect() {
 	<-time.After(reconnectInterval)
 	log.Println("Reconnecting...")
-	if err := xmpp.Connect(); err != nil {
+	if err := x.Connect(); err != nil {
 		log.Printf("Error reconnecting: %s. Retrying in %s.\n", err.Error(), reconnectInterval)
-		go xmpp.reconnect()
+		go x.reconnect()
 	}
 }

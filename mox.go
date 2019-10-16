@@ -5,9 +5,8 @@ import (
 	"time"
 
 	"github.com/cryptopunkscc/go-xmpp"
-	"github.com/cryptopunkscc/go-xmpp/client"
-	"github.com/cryptopunkscc/go-xmpp/client/bot"
-	"github.com/cryptopunkscc/go-xmpp/client/components/presence"
+	"github.com/cryptopunkscc/go-xmpp/bot"
+	"github.com/cryptopunkscc/go-xmpp/ext/presence"
 	"github.com/cryptopunkscc/mox/adminbot"
 	"github.com/cryptopunkscc/mox/contacts"
 	"github.com/cryptopunkscc/mox/payments"
@@ -25,7 +24,7 @@ type Mox struct {
 	quit chan bool
 }
 
-func (mox *Mox) Online(s xmppc.Session) {
+func (mox *Mox) Online(s xmpp.Session) {
 	mox.contacts.SetJID(s.JID())
 	mox.contacts.Fetch()
 }

@@ -3,8 +3,8 @@ package adminbot
 import (
 	"github.com/cryptopunkscc/go-bitcoin"
 	"github.com/cryptopunkscc/go-xmpp"
-	chatbot "github.com/cryptopunkscc/go-xmpp/client/bot"
-	"github.com/cryptopunkscc/go-xmpp/client/components/presence"
+	chatbot "github.com/cryptopunkscc/go-xmpp/bot"
+	"github.com/cryptopunkscc/go-xmpp/ext/presence"
 	"github.com/cryptopunkscc/mox/contacts"
 	"github.com/cryptopunkscc/mox/payments"
 	"github.com/cryptopunkscc/mox/wallet"
